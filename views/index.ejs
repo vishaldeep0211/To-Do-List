@@ -1,0 +1,28 @@
+<%- include('header'); -%>
+
+<div class="box" id="heading">
+  <h1><%= ListTitle %> </h1>
+</div>
+
+<div class="box">
+  <form action="/delete" method="post">
+    <% for(let i=0; i<newItem.length; i++) {%>
+    <div class="item">
+      <input type="checkbox" name="checkBox" value="<%= newItem[i]._id %>">
+      <p><%= newItem[i].itemName %></p>
+    </div>
+    <% } %>
+    <% if(isLoggedIn) {%>
+    <button class="add-button" type="submit" name="delete" value="<%= ListTitle %>""><i class="fas fa-trash"></i></button>
+  </form>
+
+  <form class="item" action="/add" method="post">
+    <input class="input-field" type="text" name="newItem" autofocus="true" placeholder="New Item" autocomplete="off">
+    <button class="add-button" type="submit" name="list" value="<%= ListTitle %>"">+</button>
+    <% }else{ %>
+    <input class="input-field" type="text" placeholder="logIn to Start Adding Items" disabled>
+    <%}%>
+  </form>
+</div>
+
+<%- include('footer'); -%>

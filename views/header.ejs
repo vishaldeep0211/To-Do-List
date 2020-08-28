@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://kit.fontawesome.com/875dcd4d5e.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <div class="flex-container">
+
+    <div class="flex-time-weather">
+      <div class="weather">
+        <h1 id="temperature"><%= temperature %> &deg;C</h1>
+        <p id="weatherDescription"><%= weatherDescription %></p>
+        <p>Sandi</p>
+      </div>
+      <div class="weather" id="weather-img">
+        <img class="weather-img" src="<%= img_url %> " alt="Weather-icon">
+      </div>
+    </div>
+
+    <div class="time">
+      <h1 id="time"><%= currTime %> </h1>
+      <p><%= KindofDay %></p>
+    </div>
+
+    <div class="drop-button">
+      <i class="fas fa-user-circle user"></i>
+    </div>
+
+    <div class="dropdown-content">
+      <%if(!isLoggedIn){%>
+      <form action="/login" method="POST">
+        <input class="login" type="text" id="fname" name="username" placeholder="Username" autocomplete="off">
+        <input class="login" type="password" id="lname" name="password" placeholder="Password">
+        <button type="submit" class="login-button">Login</button>
+      </form>
+      <p class="signup">New Here? <a class="signup" href="/register">Sign Up</a></pclass>
+      <%} else {%>
+      <form action="/customList" method="POST">
+        <input class="login" type="text" id="fname" name="newList" placeholder="Create New List" autocomplete="off">
+        <input class="login-button" type="submit" value="Create">
+      </form>
+      <p class="signup"><a class="signup" href="/displayLists">My Lists</a><a class="signup" href="/logout">Logout</a></pclass>
+      <%}%>
+    </div>
+
+    <div style="margin-left: 15%; color: #E4E9FD;">
+      <h3 style="font-size: 3rem;  font-family: 'Bangers', cursive; font-size: 60px; margin-top:25px">To-Do List</h3>
+    </div>
+
+  </div>
