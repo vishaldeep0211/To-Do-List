@@ -9,6 +9,7 @@ const session = require('express-session');
 const passportLocalMongoose = require('passport-local-mongoose');
 const date = require(__dirname + '/date.js')
 const weather = require('./weatherDb.js');
+const page = require('./renderPage.js');
 const app = express();
 
 app.use(express.static("public"));
@@ -45,15 +46,6 @@ mongoose.connect("mongodb://localhost:27017/todolistDB", {
   }
 });
 
-const weatherSchema = new mongoose.Schema({
-  city: String,
-  temperature: String,
-  weatherDescription: String,
-  weatherIconUrl: String
-});
-
-const Weather = mongoose.model("Weather", weatherSchema);
-
 const itemsSchema = new mongoose.Schema({
   itemName: String
 });
@@ -83,67 +75,37 @@ passport.deserializeUser(User.deserializeUser());
 
 app.get("/", function (req, res) {
 
-  const city = "Sandi"
-  const url = "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + process.env.APIKEY + "&units=metric";
-  https.get(url, response => {
-    response.on("data", data => {
+  var items = []
+  var listTitle = ((typeof req.query.List === "undefined") ? "Home" : req.query.List);
 
-      const weatherData = JSON.parse(data);
-      const temp = weatherData.main.temp;
-      const icon = weatherData.weather[0].icon;
-      const img_url = "http://openweathermap.org/img/wn/" + icon + "@2x.png"
-      const weatherDescription = weatherData.weather[0].description;
+  if (!req.isAuthenticated()) {
+    items.push({
+      itemName: "This is your To-Do List"
+    });
+    items.push({
+      itemName: "Hit the plus button to add new items"
+    });
 
-      var items = []
-      var isLoggedIn;
-      var listTitle = ((typeof req.query.List === "undefined") ? "Home" : req.query.List);
-      //console.log(req.user);
-      if (!req.isAuthenticated()) {
-        items.push({
-          itemName: "This is your To-Do List"
-        });
-        items.push({
-          itemName: "Hit the plus button to add new items"
-        });
-        isLoggedIn = false;
-        res.render('index', {
-          currTime: date.formatAMPM(),
-          ListTitle: listTitle,
-          KindofDay: date.getDate(),
-          newItem: items,
-          temperature: Math.round(temp),
-          img_url: img_url,
-          weatherDescription: _.startCase(weatherDescription),
-          isLoggedIn: isLoggedIn
-        });
+    page.renderPage('index', listTitle, items, false, res);
 
-      } else {
-        isLoggedIn = true;
-        User.findOne({
-          username: req.user.username
-        }, (err, foundItem) => {
-          if (!err) {
-            foundItem.customList.forEach(element => {
-              if (element.listName === listTitle) {
-                items = element.listItmes.slice();
-              }
-            });
+  } else {
+    User.findOne({
+      username: req.user.username
+    }, (err, foundItem) => {
+      if (!err) {
+        foundItem.customList.forEach(element => {
+          if (element.listName === listTitle) {
+            items = element.listItmes.slice();
           }
-          res.render('index', {
-            currTime: date.formatAMPM(),
-            ListTitle: listTitle,
-            KindofDay: date.getDate(),
-            newItem: items,
-            temperature: Math.round(temp),
-            img_url: img_url,
-            weatherDescription: _.startCase(weatherDescription),
-            isLoggedIn: isLoggedIn
-          });
         });
+        page.renderPage('index', listTitle, items, true, res);
+      } else {
+        console.log(err);
       }
     });
-  });
+  }
 });
+
 
 app.get("/register", (req, res) => {
   res.render('register');
@@ -161,21 +123,7 @@ app.get("/displayLists", (req, res) => {
       username: req.user.username
     }, (err, foundItem) => {
       if (!err) {
-        weather.updateWeatherData(Weather);
-        Weather.findOne({
-          city: "Sandi"
-        }, (err, data) => {
-
-          res.render("listDisplay", {
-            currTime: date.formatAMPM(),
-            customLists: foundItem.customList,
-            KindofDay: date.getDate(),
-            temperature: Math.round(data.temperature),
-            img_url: data.weatherIconUrl,
-            weatherDescription: _.startCase(data.weatherDescription),
-            isLoggedIn: true
-          });
-        });
+        page.renderPage('listDisplay', "My Custom Lists", foundItem.customList, true, res);
       } else {
         console.log(err);
       }
@@ -184,9 +132,9 @@ app.get("/displayLists", (req, res) => {
 });
 
 app.get("/fetchWeatherData", (req, res) => {
-  console.log("Updating Weather Data");
-  weather.updateWeatherData(Weather);
-  Weather.findOne({
+
+  weather.updateWeatherData();
+  weather.Model.findOne({
     city: "Sandi"
   }, (err, data) => {
     res.json(data);
@@ -317,6 +265,7 @@ app.post("/customList", (req, res) => {
     res.redirect('/?List=' + req.body.newList);
   }
 });
+
 
 app.listen(3000, function () {
   console.log("Server is running on port 3000");

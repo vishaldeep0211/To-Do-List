@@ -18,7 +18,6 @@ function fetchMostRecentData() {
   
   function showError(err) {
     console.error(err);
-    alert("Something went wrong");
   }
 
   setInterval(fetchMostRecentData, 600000);

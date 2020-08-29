@@ -1,22 +1,22 @@
 <%- include('header'); -%>
 
 <div class="box" id="heading">
-    <h1>My Custom Lists</h1>
+    <h1><%= ListTitle %></h1>
 </div>
 
 <div class="box">
-    <% for(let i=0; i<customLists.length; i++) {%>
+    <% for(let i=0; i<newItem.length; i++) {%>
     <form action="/deleteList" method="post">
         <div class="item">
-            <% if(customLists[i].listName !== "Home") { %>
-            <button class="add-button" type="submit" name="delete" value="<%= customLists[i]._id %>"><i class=" fas
+            <% if(newItem[i].listName !== "Home") { %>
+            <button class="add-button" type="submit" name="delete" value="<%= newItem[i]._id %>"><i class=" fas
                 fa-trash"></i></button>
             <% } else { %>
-            <button class="add-button" type="submit" name="delete" value="<%= customLists[i]._id %>" disabled><i class=" fas
+            <button class="add-button" type="submit" name="delete" value="<%= newItem[i]._id %>" disabled><i class=" fas
                     fa-trash"></i></button>
             <% } %>
-            <a href="/<%= customLists[i].listName %>">
-                <p><%= customLists[i].listName %></p>
+            <a href="/<%= newItem[i].listName %>">
+                <p><%= newItem[i].listName %></p>
             </a>
         </div>
     </form>
