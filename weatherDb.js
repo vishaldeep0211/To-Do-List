@@ -46,5 +46,4 @@ exports.updateWeatherData = function () {
             );
         });
     });
-
 }

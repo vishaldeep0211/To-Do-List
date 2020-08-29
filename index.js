@@ -1,93 +1,27 @@
-require('dotenv').config();
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const https = require('https');
 const _ = require('lodash');
-const passport = require('passport');
-const session = require('express-session');
-const passportLocalMongoose = require('passport-local-mongoose');
 const date = require(__dirname + '/date.js')
 const weather = require('./weatherDb.js');
 const page = require('./renderPage.js');
-const app = express();
-
-app.use(express.static("public"));
-
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
-
-app.set('view engine', 'ejs');
-
-var expiryDate = new Date("July 21, 2021 01:15:00");
-
-app.use(session({
-  cookie: {
-    expires: expiryDate
-  },
-  secret: process.env.SECRET,
-  resave: false,
-  saveUninitialized: false
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
+const db = require('./dbFile.js');
 
 
-mongoose.connect("mongodb://localhost:27017/todolistDB", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}, function (err) {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("Mongo is runnig on port 27017");
-  }
-});
-
-const itemsSchema = new mongoose.Schema({
-  itemName: String
-});
-
-const Item = mongoose.model("Item", itemsSchema);
-
-const listSchema = new mongoose.Schema({
-  listName: String,
-  listItmes: [itemsSchema]
-});
-
-const List = mongoose.model("List", listSchema);
-
-const userSchema = new mongoose.Schema({
-  username: String,
-  customList: [listSchema]
-});
-
-userSchema.plugin(passportLocalMongoose);
-
-const User = mongoose.model("User", userSchema);
-
-passport.use(User.createStrategy());
-
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+const app = db.dbData.app;
+const passport = db.dbData.passport;
+const List = db.dbData.List;
+const Item = db.dbData.Item;
+const User = db.dbData.User;
 
 app.get("/", function (req, res) {
 
-  var items = []
+  var items = [{
+    itemName: "This is your To-Do List"
+  }, {
+    itemName: "Hit the plus button to add new items"
+  }];
   var listTitle = ((typeof req.query.List === "undefined") ? "Home" : req.query.List);
 
   if (!req.isAuthenticated()) {
-    items.push({
-      itemName: "This is your To-Do List"
-    });
-    items.push({
-      itemName: "Hit the plus button to add new items"
-    });
-
     page.renderPage('index', listTitle, items, false, res);
-
   } else {
     User.findOne({
       username: req.user.username
@@ -111,10 +45,12 @@ app.get("/register", (req, res) => {
   res.render('register');
 });
 
+
 app.get("/logout", (req, res) => {
   req.logout();
   res.redirect("/");
 });
+
 
 app.get("/displayLists", (req, res) => {
 
@@ -131,6 +67,7 @@ app.get("/displayLists", (req, res) => {
   }
 });
 
+
 app.get("/fetchWeatherData", (req, res) => {
 
   weather.updateWeatherData();
@@ -141,6 +78,7 @@ app.get("/fetchWeatherData", (req, res) => {
   });
 });
 
+
 app.get("/fetchTime", (req, res) => {
   let time = {
     time: date.formatAMPM()
@@ -148,10 +86,12 @@ app.get("/fetchTime", (req, res) => {
   res.json(time);
 })
 
+
 app.get("/:customListName", (req, res) => {
-  console.log(req.params.customListName);
+  //console.log(req.params.customListName);
   res.redirect("/?List=" + req.params.customListName);
 });
+
 
 app.post("/deleteList", (req, res) => {
   //console.log(req.body.delete);
@@ -161,17 +101,19 @@ app.post("/deleteList", (req, res) => {
       username: req.user.username
     }, (err, foundItem) => {
       foundItem.customList = foundItem.customList.filter(list => String(list._id) !== req.body.delete);
-      console.log(foundItem.customList);
+      //console.log(foundItem.customList);
       foundItem.save();
     });
     res.redirect("/displayLists");
   }
 });
 
+
 app.post("/login", passport.authenticate("local", {
   successRedirect: '/',
   failureRedirect: '/'
 }));
+
 
 app.post("/register", (req, res) => {
 
@@ -195,6 +137,7 @@ app.post("/register", (req, res) => {
     }
   });
 });
+
 
 app.post("/add", function (req, res) {
 
@@ -246,6 +189,7 @@ app.post("/delete", function (req, res) {
     res.redirect("/?List=" + req.body.delete);
   }
 });
+
 
 app.post("/customList", (req, res) => {
 
