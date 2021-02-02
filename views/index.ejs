@@ -5,24 +5,44 @@
 </div>
 
 <div class="box">
-  <form action="/delete" method="post">
+
+  <% if(isLoggedIn) {%>
+  <form action="/updateList" method="post">
+  <% } %>
     <% for(let i=0; i<newItem.length; i++) {%>
     <div class="item">
-      <input type="checkbox" name="checkBox" value="<%= newItem[i]._id %>">
-      <p><%= newItem[i].itemName %></p>
+      <% if(isLoggedIn){ %>
+        <input type="checkbox" name="checkBox" value="<%= newItem[i]._id %>">
+      <% } else{ %>
+        <input type="checkbox" name="checkBox">
+      <% } %>
+      <div class="item-para">
+        <p><%= newItem[i].itemName %></p>
+      </div>
     </div>
     <% } %>
-    <% if(isLoggedIn) {%>
-    <button class="add-button" type="submit" name="delete" value="<%= ListTitle %>""><i class="fas fa-trash"></i></button>
-  </form>
+    <div id="newItem">
+      <!-- Temporary blank div to support add items without loggging in using js -->
+    </div>
 
-  <form class="item" action="/add" method="post">
-    <input class="input-field" type="text" name="newItem" autofocus="true" placeholder="New Item" autocomplete="off">
-    <button class="add-button" type="submit" name="list" value="<%= ListTitle %>"">+</button>
-    <% }else{ %>
-    <input class="input-field" type="text" placeholder="logIn to Start Adding Items" disabled>
-    <%}%>
+    <% if(isLoggedIn) {%>
+      <button class="add-button" type="submit" name="list" value="<%= [ListTitle, "delete"] %>""><i class="fas fa-trash"></i></button>
+    <% } else { %>
+      <button class="add-button" type="submit" name="delete" onclick="deleteItems()"><i class="fas fa-trash"></i></button>
+    <% } %>
+
+    <input id="newItems" class="input-field" type="text" name="newItem" autofocus="true" placeholder="New Item" autocomplete="off">
+
+    <% if(isLoggedIn) {%>
+      <button class="add-button" type="submit" name="list" value="<%= [ListTitle, "add"] %>"" id="add">+</button>
+    <% } else { %>
+      <button class="add-button" onclick="addItems()" name="list" value="<%= ListTitle %>"">+</button>
+    <% } %>
+
+  <% if(isLoggedIn) {%>
   </form>
+  <% } %>
+
 </div>
 
 <%- include('footer'); -%>

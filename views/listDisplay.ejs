@@ -5,22 +5,21 @@
 </div>
 
 <div class="box">
+    <form action="/updateCustomLists" method="post">
     <% for(let i=0; i<newItem.length; i++) {%>
-    <form action="/deleteList" method="post">
         <div class="item">
-            <% if(newItem[i].listName !== "Home") { %>
-            <button class="add-button" type="submit" name="delete" value="<%= newItem[i]._id %>"><i class=" fas
-                fa-trash"></i></button>
-            <% } else { %>
-            <button class="add-button" type="submit" name="delete" value="<%= newItem[i]._id %>" disabled><i class=" fas
-                    fa-trash"></i></button>
-            <% } %>
+            <div class="check-box-div">
+                <input type="checkbox" name="checkBox" value="<%= newItem[i]._id %>">
+            </div>
             <a href="/<%= newItem[i].listName %>">
                 <p><%= newItem[i].listName %></p>
             </a>
         </div>
-    </form>
     <% } %>
+        <button class="add-button" type="submit" name="queryType" value="<%= [ListTitle, "delete"] %>""><i class="fas fa-trash"></i></button>
+        <input class="input-field" type="text" name="newItem" autofocus="true" placeholder="New List" autocomplete="off">
+        <button class="add-button" type="submit" name="queryType" value="<%= [ListTitle, "add"] %>"">+</button>
+    </form>
 </div>
 
 <%- include('footer'); -%>

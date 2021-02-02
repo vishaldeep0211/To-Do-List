@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const date = require(__dirname + '/date.js')
-const weather = require('./weatherDb.js');
 const page = require('./renderPage.js');
 const db = require('./dbFile.js');
 
@@ -13,26 +12,38 @@ const User = db.dbData.User;
 
 app.get("/", function (req, res) {
 
-  var items = [{
-    itemName: "This is your To-Do List"
-  }, {
-    itemName: "Hit the plus button to add new items"
-  }];
-  var listTitle = ((typeof req.query.List === "undefined") ? "Home" : req.query.List);
+  var items = [];
 
   if (!req.isAuthenticated()) {
-    page.renderPage('index', listTitle, items, false, res);
-  } else {
+    page.renderPage('index', "Home", items, false, res);
+  }
+  else {
     User.findOne({
       username: req.user.username
     }, (err, foundItem) => {
       if (!err) {
-        foundItem.customList.forEach(element => {
-          if (element.listName === listTitle) {
-            items = element.listItmes.slice();
+
+        if(typeof req.query.List === "undefined")
+        {
+          if(foundItem.customList.length !== 0)
+          {
+            items = foundItem.customList[0].listItmes.slice();
+            page.renderPage('index', foundItem.customList[0].listName, items, true, res);
           }
-        });
-        page.renderPage('index', listTitle, items, true, res);
+          else{
+            res.redirect("/displayLists");
+          }
+        }
+        else{
+          foundItem.customList.forEach(element => {
+            if (element.listName === req.query.List) {
+              items = element.listItmes.slice();
+            }
+          });
+          // console.log(items);
+          page.renderPage('index', req.query.List, items, true, res);
+        }
+
       } else {
         console.log(err);
       }
@@ -70,11 +81,15 @@ app.get("/displayLists", (req, res) => {
 
 app.get("/fetchWeatherData", (req, res) => {
 
+  const weather = require('./weatherDb.js');
   weather.updateWeatherData();
   weather.Model.findOne({
     city: "Sandi"
   }, (err, data) => {
-    res.json(data);
+    if(!err)
+      res.json(data);
+    else
+      console.log(err);
   });
 });
 
@@ -93,22 +108,6 @@ app.get("/:customListName", (req, res) => {
 });
 
 
-app.post("/deleteList", (req, res) => {
-  //console.log(req.body.delete);
-  if (req.isAuthenticated()) {
-
-    User.findOne({
-      username: req.user.username
-    }, (err, foundItem) => {
-      foundItem.customList = foundItem.customList.filter(list => String(list._id) !== req.body.delete);
-      //console.log(foundItem.customList);
-      foundItem.save();
-    });
-    res.redirect("/displayLists");
-  }
-});
-
-
 app.post("/login", passport.authenticate("local", {
   successRedirect: '/',
   failureRedirect: '/'
@@ -117,14 +116,9 @@ app.post("/login", passport.authenticate("local", {
 
 app.post("/register", (req, res) => {
 
-  const customLIst = new List({
-    listName: "Home",
-    listItmes: []
-  });
-
   User.register({
     username: req.body.username,
-    customList: customLIst
+    customList: []
   }, req.body.password, function (err) {
     if (err) {
       console.log(err);
@@ -132,85 +126,100 @@ app.post("/register", (req, res) => {
     } else {
       // This invoke login method to automatically log in the newly registered user, by creating a session.
       passport.authenticate("local")(req, res, function () {
-        res.redirect("/");
+        res.redirect("/displayLists");
       });
     }
   });
 });
 
 
-app.post("/add", function (req, res) {
+app.post("/updateList", function (req, res) {
 
   if (req.isAuthenticated()) {
+
+    let listName = req.body.list.split(",")[0];
+    let requestType = req.body.list.split(",")[1];
+
     User.findOne({
       username: req.user.username
     }, (err, foundItem) => {
       if (!err) {
-        const newItem = new Item({
-          itemName: req.body.newItem
-        });
-        foundItem.customList.forEach(element => {
-          if (element.listName === req.body.list) {
-            element.listItmes.push(newItem);
-            foundItem.save();
-          }
-        });
+        if(requestType === "add")
+        {
+          const newItem = new Item({
+            itemName: req.body.newItem
+          });
+          foundItem.customList.forEach(element => {
+            if (element.listName === listName) {
+              element.listItmes.push(newItem);
+            }
+          });
+        }
+        else{
+          var checkedBoxesId;
+          if (Array.isArray(req.body.checkBox))
+            checkedBoxesId = req.body.checkBox;
+          else
+            checkedBoxesId = [req.body.checkBox];
+
+          foundItem.customList.forEach(element => {
+            if (element.listName === listName) {
+              element.listItmes = element.listItmes.filter(value => {
+                return String(value._id) !== checkedBoxesId.find(element => element === String(value._id));
+              });
+            }
+          });
+        }
+        foundItem.save();
       } else {
         console.log(err);
       }
     });
 
-    res.redirect("/?List=" + req.body.list);
+    res.redirect("/?List=" + listName);
   }
 });
 
 
-app.post("/delete", function (req, res) {
+app.post("/updatecustomLists", (req, res) => {
 
-  if (req.isAuthenticated()) {
-    var checkedBoxesId;
-    if (Array.isArray(req.body.checkBox))
-      checkedBoxesId = req.body.checkBox;
-    else
-      checkedBoxesId = [req.body.checkBox];
-
-    User.findOne({
-      username: req.user.username
-    }, (err, foundItem) => {
-      foundItem.customList.forEach(element => {
-        if (element.listName === req.body.delete) {
-          element.listItmes = element.listItmes.filter(value => {
-            return String(value._id) !== checkedBoxesId.find(element => element === String(value._id));
-          });
-          foundItem.save();
-        }
-      });
-    });
-    res.redirect("/?List=" + req.body.delete);
-  }
-});
-
-
-app.post("/customList", (req, res) => {
+  let listName = req.body.queryType.split(",")[0];
+  let requestType = req.body.queryType.split(",")[1];
 
   if (req.isAuthenticated()) {
     User.findOne({
       username: req.user.username
     }, (err, foundItem) => {
       if (!err) {
-        const newList = new List({
-          listName: req.body.newList,
-          listItmes: []
-        });
-        foundItem.customList.push(newList);
-        foundItem.save();
+        if(requestType === "add")
+        {
+          const newList = new List({
+            listName: req.body.newItem,
+            listItmes: []
+          });
+          foundItem.customList.push(newList);
+          foundItem.save();
+          res.redirect('/?List=' + req.body.newItem);
+        }
+        else{
+          var checkedBoxesId;
+          if (Array.isArray(req.body.checkBox))
+            checkedBoxesId = req.body.checkBox;
+          else
+            checkedBoxesId = [req.body.checkBox];
+
+          foundItem.customList = foundItem.customList.filter(list => {
+            return String(list._id) !== checkedBoxesId.find(element => element === String(list._id));
+          });
+          foundItem.save();
+          res.redirect("/displayLists");
+        }
       }
     });
-    res.redirect('/?List=' + req.body.newList);
   }
 });
 
 
-app.listen(3000, function () {
+app.listen(process.env.PORT || 3000, function () {
   console.log("Server is running on port 3000");
 });

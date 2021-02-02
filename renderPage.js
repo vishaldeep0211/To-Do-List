@@ -3,7 +3,6 @@ const weather = require('./weatherDb.js');
 
 exports.renderPage = function (pageToDisplay, listTitle, items, isLoggedIn, res) {
 
-    weather.updateWeatherData();
     weather.Model.findOne({
         city: "Sandi"
     }, (err, data) => {
