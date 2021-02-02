@@ -6,21 +6,22 @@ function fetchMostRecentData() {
   }
   
   function updateView(data) {
-    let tempHeading = document.getElementById("temperature");
-    tempHeading.innerHTML = `${data.temperature} &deg;C`;
+    const weatherDiv = document.getElementsByClassName("weather-description")[0];
+    // console.log(weatherDiv.children[1]);
 
-    let weatherPara = document.getElementById("weatherDescription");
-    weatherPara.innerHTML = `${data.weatherDescription}`;
+    weatherDiv.children[0].innerHTML = `${data.temperature} &deg;C`;
+    weatherDiv.children[1].innerHTML = `${data.weatherDescription}`;
 
-    let weatherImg = document.getElementById("weather-img");
-    weatherImg.innerHTML = `<img class="weather-img" src="${data.weatherIconUrl}" alt="Weather-icon">`;
+    const weatherImg = document.getElementsByClassName("weather-img");
+    // console.log(weatherImg.src);
+    weatherImg.src = `${data.weatherIconUrl}`
   }
   
   function showError(err) {
     console.error(err);
   }
 
-  setInterval(fetchMostRecentData, 600000);
+  setInterval(fetchMostRecentData, 900000);
 
   function updateTime(){
     fetch("/fetchTime")
@@ -30,7 +31,9 @@ function fetchMostRecentData() {
   }
 
   function updateTimeField(data){
+    const time = document.getElementsByClassName("time")[0].firstElementChild;
+    // console.log(time);
     time.innerHTML = `${data.time}`;
   }
 
-  setInterval(updateTime, 100);
+  setInterval(updateTime, 1000);

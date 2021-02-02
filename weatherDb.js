@@ -30,7 +30,6 @@ exports.updateWeatherData = function () {
                 weatherDescription: _.startCase(weatherData.weather[0].description),
                 weatherIconUrl: img_url
             }
-
             Weather.updateOne({
                     city: "Sandi"
                 }, {

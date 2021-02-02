@@ -30,17 +30,27 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-mongoose.connect("mongodb://localhost:27017/todolistDB", {
+mongoose.connect("mongodb+srv://admin-vishal:"+process.env.ATLAS_PASS+"@mycluster.wczve.mongodb.net/todolistDB?retryWrites=true&w=majority", {
   useNewUrlParser: true,
   useUnifiedTopology: true
-}, function (err) {
+}, err => {
   if (err) {
     console.log(err);
   } else {
-    console.log("Mongo is runnig on port 27017");
+    console.log("Mongo is running on port 27017");
   }
 });
+
+// mongoose.connect("mongodb://localhost:27017/todolistDB", {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true
+// }, function (err) {
+//   if (err) {
+//     console.log(err);
+//   } else {
+//     console.log("Mongo is runnig on port 27017");
+//   }
+// });
 
 const itemsSchema = new mongoose.Schema({
   itemName: String
